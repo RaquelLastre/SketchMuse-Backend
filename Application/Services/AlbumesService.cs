@@ -18,22 +18,60 @@ namespace SketchMuse.Application.Interfaces
 
         public async Task CrearAlbum(string titulo, int usuarioId, List<ImagenDTO> imagenes)
         {
-            var album = new Album
-            {
-                Titulo = titulo,
-                UsuarioId = usuarioId,
-                UsedAt = DateTime.UtcNow,
-                Imagenes = imagenes.Select(i => new Imagen
-                {
-                    Url = i.Url,
-                    UrlSmall = i.UrlSmall,
-                    Titulo = i.Titulo
-                }).ToList()
-            };
+            var albumExistente = await _context.Albumes
+        .Include(a => a.Imagenes)
+        .FirstOrDefaultAsync(a =>
+            a.UsuarioId == usuarioId &&
+            a.Titulo.ToLower() == titulo.ToLower());
 
-            _context.Albumes.Add(album);
-            await _context.SaveChangesAsync();
+    if (albumExistente != null)
+    {
+        var existentes = albumExistente.Imagenes
+            .Select(i => $"{i.Source}:{i.ExternalId}")
+            .ToHashSet();
+
+        var nuevasImagenes = imagenes
+            .Where(i => !existentes.Contains($"{i.Source}:{i.ExternalId}"))
+            .Select(i => new Imagen
+            {
+                Url = i.Url,
+                UrlSmall = i.UrlSmall ?? i.Url ?? "",
+                Titulo = i.Titulo,
+                ExternalId = i.ExternalId,
+                Source = i.Source,
+                AlbumId = albumExistente.Id
+            })
+            .ToList();
+
+        if (nuevasImagenes.Any())
+        {
+            albumExistente.Imagenes.AddRange(nuevasImagenes);
         }
+
+        albumExistente.UsedAt = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync();
+        return;
+    }
+
+    var album = new Album
+    {
+        Titulo = titulo,
+        UsuarioId = usuarioId,
+        UsedAt = DateTime.UtcNow,
+        Imagenes = imagenes.Select(i => new Imagen
+        {
+            Url = i.Url,
+            UrlSmall = i.UrlSmall ?? i.Url ?? "",
+            Titulo = i.Titulo,
+            ExternalId = i.ExternalId,
+            Source = i.Source
+        }).ToList()
+    };
+
+    _context.Albumes.Add(album);
+    await _context.SaveChangesAsync();
+}
 
         public async Task AgregarAlbum(int albumId, int usuarioId, int count = 10)
         {
@@ -43,15 +81,26 @@ namespace SketchMuse.Application.Interfaces
 
             if (album == null) throw new Exception("Álbum no encontrado.");
 
-            var imagenesNuevas = await _imagenesService.PedirImagenes(album.Titulo, count);
+            int unsplashOffset = album.Imagenes.Count(i => i.Source == "unsplash");
+            int pixabayOffset = album.Imagenes.Count(i => i.Source == "pixabay");
+
+            var imagenesNuevas = await _imagenesService.PedirImagenes(album.Titulo, count, unsplashOffset, pixabayOffset);
 
             // HashSet de URLs existentes para filtrar duplicados
-            var urlsExistentes = album.Imagenes.Select(i => i.Url).ToHashSet();
+            var existentes = album.Imagenes.Select(i => $"{i.Source}:{i.ExternalId}").ToHashSet();
 
             album.Imagenes.AddRange(
                 imagenesNuevas
-                    .Where(i => !urlsExistentes.Contains(i.Url))
-                    .Select(i => new Imagen { Url = i.Url,UrlSmall = i.UrlSmall ?? i.Url, Titulo = i.Titulo, AlbumId = album.Id })
+                    .Where(i => !existentes.Contains($"{i.Source}:{i.ExternalId}"))
+        .Select(i => new Imagen 
+        { 
+            Url = i.Url,
+            UrlSmall = i.UrlSmall ?? i.Url ?? "",
+            Titulo = i.Titulo,
+            ExternalId = i.ExternalId,
+            Source = i.Source,
+            AlbumId = album.Id
+        })
             );
 
             album.UsedAt = DateTime.UtcNow;
@@ -74,7 +123,7 @@ namespace SketchMuse.Application.Interfaces
                     UsedAt = a.UsedAt,
                     PreviewImagenes = a.Imagenes
                         .Take(3)
-                        .Select(i => i.UrlSmall?? i.Url)
+                        .Select(i => i.UrlSmall?? i.Url ?? "")
                         .ToList()
                 })
                 .ToList();
@@ -82,6 +131,7 @@ namespace SketchMuse.Application.Interfaces
 
 public async Task<List<ImagenDTO>> GetImagenesAlbum(int albumId, int usuarioId, int count, bool soloNuevas = false)
 {
+    
     var album = await _context.Albumes
         .Include(a => a.Imagenes)
         .FirstOrDefaultAsync(a => a.Id == albumId && a.UsuarioId == usuarioId);
@@ -89,35 +139,41 @@ public async Task<List<ImagenDTO>> GetImagenesAlbum(int albumId, int usuarioId, 
     if (album == null)
         throw new Exception("Álbum no encontrado.");
 
-    var urlsExistentes = album.Imagenes.Select(i => i.Url).ToHashSet();
+    int unsplashOffset = album.Imagenes.Count(i => i.Source == "unsplash");
+    int pixabayOffset = album.Imagenes.Count(i => i.Source == "pixabay");
+
+
+    var existentes = album.Imagenes.Select(i => $"{i.Source}:{i.ExternalId}").ToHashSet();
 
     if (soloNuevas)
     {
         var nuevasFinales = new List<Imagen>();
         int intentos = 0;
-        int offset = album.Imagenes.Count; 
 
         while (nuevasFinales.Count < count && intentos < 5)
         {
             int pedirCantidad = (count - nuevasFinales.Count) * 2;
-            var nuevas = await _imagenesService.PedirImagenes(album.Titulo, pedirCantidad, offset);
+            var nuevas = await _imagenesService.PedirImagenes(album.Titulo, pedirCantidad, unsplashOffset, pixabayOffset);
 
             var filtradas = nuevas
-                .Where(i => !urlsExistentes.Contains(i.Url))
+                .Where(i => !existentes.Contains($"{i.Source}:{i.ExternalId}"))
                 .Select(i => new Imagen
                 {
                     Url = i.Url,
-                    UrlSmall = i.UrlSmall ?? i.Url,
+                    UrlSmall = i.UrlSmall ?? i.Url ?? "",
                     Titulo = i.Titulo,
+                    ExternalId = i.ExternalId,
+                    Source = i.Source,
                     AlbumId = album.Id
                 })
                 .ToList();
 
             foreach (var img in filtradas)
-                urlsExistentes.Add(img.Url);
+                existentes.Add($"{img.Source}:{img.ExternalId}");
 
             nuevasFinales.AddRange(filtradas);
-            offset += pedirCantidad;
+            unsplashOffset += filtradas.Count(i => i.Source == "unsplash");
+            pixabayOffset += filtradas.Count(i => i.Source == "pixabay");
             intentos++;
         }
 
@@ -130,7 +186,7 @@ public async Task<List<ImagenDTO>> GetImagenesAlbum(int albumId, int usuarioId, 
         }
 
         return paraDevolver
-            .Select(i => new ImagenDTO { Url = i.Url, UrlSmall = i.UrlSmall, Titulo = i.Titulo })
+            .Select(i => new ImagenDTO { Url = i.Url, UrlSmall = i.UrlSmall ?? i.Url ?? "", Titulo = i.Titulo,ExternalId = i.ExternalId, Source = i.Source })
             .ToList();
     }
     else
@@ -145,23 +201,29 @@ public async Task<List<ImagenDTO>> GetImagenesAlbum(int albumId, int usuarioId, 
             while (nuevasFinales.Count < faltan && intentos < 5)
             {
                 int pedirCantidad = (faltan - nuevasFinales.Count) * 2;
-                var nuevas = await _imagenesService.PedirImagenes(album.Titulo, pedirCantidad);
+                var nuevas = await _imagenesService.PedirImagenes(album.Titulo, pedirCantidad, unsplashOffset, pixabayOffset);
 
                 var filtradas = nuevas
-                    .Where(i => !urlsExistentes.Contains(i.Url))
+                    .Where(i => !existentes.Contains($"{i.Source}:{i.ExternalId}"))
                     .Select(i => new Imagen
                     {
                         Url = i.Url,
-                        UrlSmall = i.UrlSmall ?? i.Url,
+                        UrlSmall = i.UrlSmall ?? i.Url ?? "",
                         Titulo = i.Titulo,
+                        ExternalId = i.ExternalId,
+                        Source = i.Source,
                         AlbumId = album.Id
                     })
                     .ToList();
 
                 foreach (var img in filtradas)
-                    urlsExistentes.Add(img.Url);
+                    existentes.Add($"{img.Source}:{img.ExternalId}");
 
                 nuevasFinales.AddRange(filtradas);
+                
+                unsplashOffset += filtradas.Count(i => i.Source == "unsplash");
+                pixabayOffset += filtradas.Count(i => i.Source == "pixabay");
+
                 intentos++;
             }
 
@@ -174,11 +236,12 @@ public async Task<List<ImagenDTO>> GetImagenesAlbum(int albumId, int usuarioId, 
 
         var imagenesActualizadas = await _context.Imagenes
             .Where(i => i.AlbumId == albumId)
+            .OrderBy(i => i.Id)
             .Take(count)
             .ToListAsync();
 
         return imagenesActualizadas
-            .Select(i => new ImagenDTO { Url = i.Url, UrlSmall = i.UrlSmall, Titulo = i.Titulo })
+            .Select(i => new ImagenDTO { Url = i.Url, UrlSmall = i.UrlSmall ?? i.Url ?? "", Titulo = i.Titulo, ExternalId = i.ExternalId, Source = i.Source })
             .ToList();
     }
 }

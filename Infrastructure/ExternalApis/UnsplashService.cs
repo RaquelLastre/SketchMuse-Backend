@@ -17,9 +17,9 @@ namespace SketchMuse.Infrastructure.ExternalApis
         public async Task<List<ImagenDTO>> LlamadaApiUnsplash(string textoBusqueda, int numImagenes, int offset = 0)
         {
             var apiKey = _config["UnsplashApi:ApiKey"];
-    string busquedaSinEspacios = Uri.EscapeDataString(textoBusqueda);
-    int page = (offset / numImagenes) + 1; // calcular página según offset
-    var url = $"https://api.unsplash.com/search/photos?query={busquedaSinEspacios}&per_page={numImagenes}&page={page}&client_id={apiKey}";
+            string busquedaSinEspacios = Uri.EscapeDataString(textoBusqueda);
+            int page = (offset / numImagenes) + 1; // calcular página según offset
+            var url = $"https://api.unsplash.com/search/photos?query={busquedaSinEspacios}&per_page={numImagenes}&page={page}&client_id={apiKey}";
 
             var response = await _httpClient.GetAsync(url);
             //comprueba que la respuesta sea 200-299 y si no lo es lanza una excepción
@@ -39,17 +39,26 @@ namespace SketchMuse.Infrastructure.ExternalApis
 
             foreach (var img in listaImagenes.EnumerateArray())
             {
-               if (img.GetProperty("urls").TryGetProperty("raw", out JsonElement enlace))
-                {
-                    imagenes.Add(new ImagenDTO
-                    {
-                        //url es un elemento json, asi que se convierte a string. Si por alguna razon no devuelve un string, no lanza excepción
-                        Url = enlace.GetString() ?? "",
-                        UrlSmall = img.TryGetProperty("small", out JsonElement urlSmall) ? urlSmall.GetString() : "",
-                        Titulo = img.TryGetProperty("alt_description", out JsonElement titulo) ? titulo.GetString() : ""
-                    });
-                }
-            }
+               if (img.TryGetProperty("urls", out JsonElement urls)){
+                imagenes.Add(new ImagenDTO
+                {       
+                    Url = urls.TryGetProperty("regular", out JsonElement urlRegular)
+                        ? urlRegular.GetString() ?? ""
+                        : "",
+
+                    UrlSmall = urls.TryGetProperty("small", out JsonElement urlSmall)
+                        ? urlSmall.GetString() ?? ""
+                        : "",
+
+                    Titulo = img.TryGetProperty("alt_description", out JsonElement titulo)
+                        ? titulo.GetString() ?? ""
+                        : "",
+
+                    ExternalId = img.GetProperty("id").GetString() ?? "",
+
+                    Source = "unsplash"
+                });
+            }}
 
             return imagenes;
         }

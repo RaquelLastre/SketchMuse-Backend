@@ -30,20 +30,20 @@ namespace SketchMuse.Controllers
             return Ok(albumes);
         }
 
-       [HttpGet("{albumId}/imagenes")]
-[Authorize]
-public async Task<IActionResult> GetImagenesAlbum(
-    int albumId,
-    [FromQuery] int count = 10,
-    [FromQuery] bool soloNuevas = false)
-{
-    var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-    if (userIdClaim == null) return Unauthorized();
+        [HttpGet("{albumId}/imagenes")]
+        [Authorize]
+        public async Task<IActionResult> GetImagenesAlbum(
+            int albumId,
+            [FromQuery] int count = 10,
+            [FromQuery] bool soloNuevas = false)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userIdClaim == null) return Unauthorized();
 
-    int usuarioId = int.Parse(userIdClaim);
-    var imagenes = await _albumService.GetImagenesAlbum(albumId, usuarioId, count, soloNuevas);
-    return Ok(imagenes);
-}
+            int usuarioId = int.Parse(userIdClaim);
+            var imagenes = await _albumService.GetImagenesAlbum(albumId, usuarioId, count, soloNuevas);
+            return Ok(imagenes);
+        }
 
         [HttpDelete("delete-album/{albumId}")]
         [Authorize]
