@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SketchMuse.Infrastructure.Data;
 
@@ -10,9 +11,11 @@ using SketchMuse.Infrastructure.Data;
 namespace SketchMuse.Migrations
 {
     [DbContext(typeof(MiDbcontext))]
-    partial class MiDbcontextModelSnapshot : ModelSnapshot
+    [Migration("20260508141707_AgregarCampos")]
+    partial class AgregarCampos
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
