@@ -81,10 +81,10 @@ namespace SketchMuse.Application.Interfaces
 
             if (album == null) throw new Exception("Álbum no encontrado.");
 
-            int unsplashOffset = album.Imagenes.Count(i => i.Source == "unsplash");
-            int pixabayOffset = album.Imagenes.Count(i => i.Source == "pixabay");
+            int apiPrincipalOffset = album.Imagenes.Count(i => i.Source == "pexels");
+            int apiFallbackOffset = album.Imagenes.Count(i => i.Source == "wikimedia");
 
-            var imagenesNuevas = await _imagenesService.PedirImagenes(album.Titulo, count, unsplashOffset, pixabayOffset);
+            var imagenesNuevas = await _imagenesService.PedirImagenes(album.Titulo, count, apiPrincipalOffset, apiFallbackOffset);
 
             // HashSet de URLs existentes para filtrar duplicados
             var existentes = album.Imagenes.Select(i => $"{i.Source}:{i.ExternalId}").ToHashSet();
@@ -139,8 +139,8 @@ public async Task<List<ImagenDTO>> GetImagenesAlbum(int albumId, int usuarioId, 
     if (album == null)
         throw new Exception("Álbum no encontrado.");
 
-    int unsplashOffset = album.Imagenes.Count(i => i.Source == "unsplash");
-    int pixabayOffset = album.Imagenes.Count(i => i.Source == "pixabay");
+    int apiPrincipalOffset = album.Imagenes.Count(i => i.Source == "pexels");
+    int apiFallbackOffset = album.Imagenes.Count(i => i.Source == "wikimedia");
 
 
     var existentes = album.Imagenes.Select(i => $"{i.Source}:{i.ExternalId}").ToHashSet();
@@ -153,7 +153,7 @@ public async Task<List<ImagenDTO>> GetImagenesAlbum(int albumId, int usuarioId, 
         while (nuevasFinales.Count < count && intentos < 5)
         {
             int pedirCantidad = (count - nuevasFinales.Count) * 2;
-            var nuevas = await _imagenesService.PedirImagenes(album.Titulo, pedirCantidad, unsplashOffset, pixabayOffset);
+            var nuevas = await _imagenesService.PedirImagenes(album.Titulo, pedirCantidad, apiPrincipalOffset, apiFallbackOffset);
 
             var filtradas = nuevas
                 .Where(i => !existentes.Contains($"{i.Source}:{i.ExternalId}"))
@@ -172,8 +172,8 @@ public async Task<List<ImagenDTO>> GetImagenesAlbum(int albumId, int usuarioId, 
                 existentes.Add($"{img.Source}:{img.ExternalId}");
 
             nuevasFinales.AddRange(filtradas);
-            unsplashOffset += filtradas.Count(i => i.Source == "unsplash");
-            pixabayOffset += filtradas.Count(i => i.Source == "pixabay");
+            apiPrincipalOffset += filtradas.Count(i => i.Source == "pexels");
+            apiFallbackOffset += filtradas.Count(i => i.Source == "wikimedia");
             intentos++;
         }
 
@@ -201,7 +201,7 @@ public async Task<List<ImagenDTO>> GetImagenesAlbum(int albumId, int usuarioId, 
             while (nuevasFinales.Count < faltan && intentos < 5)
             {
                 int pedirCantidad = (faltan - nuevasFinales.Count) * 2;
-                var nuevas = await _imagenesService.PedirImagenes(album.Titulo, pedirCantidad, unsplashOffset, pixabayOffset);
+                var nuevas = await _imagenesService.PedirImagenes(album.Titulo, pedirCantidad, apiPrincipalOffset, apiFallbackOffset);
 
                 var filtradas = nuevas
                     .Where(i => !existentes.Contains($"{i.Source}:{i.ExternalId}"))
@@ -221,8 +221,8 @@ public async Task<List<ImagenDTO>> GetImagenesAlbum(int albumId, int usuarioId, 
 
                 nuevasFinales.AddRange(filtradas);
                 
-                unsplashOffset += filtradas.Count(i => i.Source == "unsplash");
-                pixabayOffset += filtradas.Count(i => i.Source == "pixabay");
+                apiPrincipalOffset += filtradas.Count(i => i.Source == "pexels");
+                apiFallbackOffset += filtradas.Count(i => i.Source == "wikimedia");
 
                 intentos++;
             }

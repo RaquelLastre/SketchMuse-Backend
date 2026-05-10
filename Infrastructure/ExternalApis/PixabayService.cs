@@ -1,9 +1,10 @@
-﻿using SketchMuse.Domain.DTOs;
+﻿using SketchMuse.Application.Interfaces;
+using SketchMuse.Domain.DTOs;
 using System.Text.Json;
 
 namespace SketchMuse.Infrastructure.ExternalApis
 {
-    public class PixabayService
+    public class PixabayService : IImagenProvider
     {
         private readonly HttpClient _httpClient;
         //para acceder valoresde la config como appsettings.json
@@ -16,7 +17,7 @@ namespace SketchMuse.Infrastructure.ExternalApis
         }
 
         //async Task indica que es asincrono y el hilo no se queda bloqueado si la respuesta tarda unos segundos, puede seguir procesando peticiones
-        public async Task<List<ImagenDTO>> LlamadaApiPixabay(string textoBusqueda, int numImagenes, int offset = 0)
+        public async Task<List<ImagenDTO>> BuscarImagenes(string textoBusqueda, int numImagenes, int offset = 0)
         {
             var apiKey = _config["PixabayApi:ApiKey"];
             string busquedaSinEspacios = Uri.EscapeDataString(textoBusqueda);

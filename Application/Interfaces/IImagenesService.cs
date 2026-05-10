@@ -5,6 +5,6 @@ namespace SketchMuse.Application.Interfaces
 {
     public interface IImagenesService
 {
-    Task<List<ImagenDTO>> PedirImagenes(string query, int count, int unsplashOffset = 0, int pixabayOffset = 0);
+    Task<List<ImagenDTO>> PedirImagenes(string query, int count, int apiPrincipalOffset = 0, int apiFallbackOffset = 0);
 }
 }

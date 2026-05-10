@@ -48,5 +48,22 @@ namespace SketchMuse.Application.Interfaces
 
             return user;
         }
+
+        public async Task<List<Usuario>> GetUsuarios()
+        {
+            return await _context.Usuarios
+                .OrderBy(u => u.CreatedAt)
+                .ToListAsync();
+        }
+
+        public async Task<bool> EliminarUsuario(int id)
+        {
+            var usuario = await _context.Usuarios.FindAsync(id);
+            if (usuario == null) return false;
+
+            _context.Usuarios.Remove(usuario);
+            await _context.SaveChangesAsync();
+            return true;
+        }
     }
 }

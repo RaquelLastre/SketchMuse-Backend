@@ -1,9 +1,10 @@
-﻿using SketchMuse.Domain.DTOs;
+﻿using SketchMuse.Application.Interfaces;
+using SketchMuse.Domain.DTOs;
 using System.Text.Json;
 
 namespace SketchMuse.Infrastructure.ExternalApis
 {
-    public class UnsplashService
+    public class UnsplashService : IImagenProvider
     {
          private readonly HttpClient _httpClient;
         private readonly IConfiguration _config;
@@ -14,7 +15,7 @@ namespace SketchMuse.Infrastructure.ExternalApis
             _config = config;
         }
 
-        public async Task<List<ImagenDTO>> LlamadaApiUnsplash(string textoBusqueda, int numImagenes, int offset = 0)
+        public async Task<List<ImagenDTO>> BuscarImagenes(string textoBusqueda, int numImagenes, int offset = 0)
         {
             var apiKey = _config["UnsplashApi:ApiKey"];
             string busquedaSinEspacios = Uri.EscapeDataString(textoBusqueda);

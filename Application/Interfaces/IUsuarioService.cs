@@ -6,5 +6,7 @@ namespace SketchMuse.Application.Interfaces
     {
         Task<Usuario?> Registro(string email, string password);
         Task<Usuario?> Login(string email, string password);
+        Task<List<Usuario>> GetUsuarios();
+        Task<bool> EliminarUsuario(int id);
     }
 }
