@@ -6,5 +6,6 @@
         public string Titulo { get; set; }
         public DateTime UsedAt { get; set; }
         public List<string> PreviewImagenes { get; set; }
+        public int NumImagenes { get; set; }
     }
 }

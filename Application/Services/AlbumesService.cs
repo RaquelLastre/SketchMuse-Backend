@@ -121,6 +121,7 @@ namespace SketchMuse.Application.Interfaces
                     Id = a.Id,
                     Titulo = a.Titulo,
                     UsedAt = a.UsedAt,
+                    NumImagenes = a.Imagenes.Count,
                     PreviewImagenes = a.Imagenes
                         .Take(3)
                         .Select(i => i.UrlSmall?? i.Url ?? "")
@@ -182,6 +183,7 @@ public async Task<List<ImagenDTO>> GetImagenesAlbum(int albumId, int usuarioId, 
         if (paraDevolver.Any())
         {
             _context.Imagenes.AddRange(paraDevolver);
+            album.UsedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
         }
 
