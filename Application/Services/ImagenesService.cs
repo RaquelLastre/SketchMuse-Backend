@@ -25,13 +25,16 @@ namespace SketchMuse.Application.Services
                 if (imagenes == null || imagenes.Count == 0)
                     throw new Exception("Proveedor principal sin resultados");
             }
-            catch
+            catch (Exception ex)
             {
+                Console.WriteLine($"{ex.Message}. Usando fallback.");
                 imagenes = await _proveedorFallback.BuscarImagenes(query, count, apiFallbackOffset);
             }
 
             if (imagenes == null || imagenes.Count == 0)
+            {
                 throw new Exception("No se pudieron obtener imágenes de ningún servicio externo.");
+            }
 
             return imagenes.Select(i => new ImagenDTO
             {

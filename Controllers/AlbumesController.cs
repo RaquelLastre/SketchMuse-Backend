@@ -1,10 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using SketchMuse.Application.Interfaces;
-using SketchMuse.Infrastructure.Data;
 using System.Security.Claims;
-using static SketchMuse.Application.Interfaces.IAlbumesService;
 
 namespace SketchMuse.Controllers
 {

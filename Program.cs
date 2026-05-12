@@ -1,6 +1,8 @@
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using SketchMuse.Application.Interfaces;
+using SketchMuse.Application.Mappings;
 using SketchMuse.Application.Services;
 using SketchMuse.Infrastructure.Data;
 using SketchMuse.Infrastructure.ExternalApis;
@@ -9,18 +11,19 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddHttpClient<PexelsService>();
-builder.Services.AddHttpClient<WikimediaService>();
-builder.Services.AddHttpClient<PixabayService>();
-builder.Services.AddHttpClient<UnsplashService>();
+builder.Services.AddAutoMapper(typeof(MappingProfile));
 
-builder.Services.AddSingleton<JwtService>();
+builder.Services.AddSingleton<JwtService>(); //se crea aqui para no generar un jwt por peticion
+
+builder.Services.AddHttpClient<PexelsService>(); //se inyecta aqui el httpclient para que se reutilice y no se creen muchos sockets, en vez de en la clase. Ademas lo guarda en services para poder usarlo en el servicio de imagenes
+builder.Services.AddHttpClient<WikimediaService>();
 
 builder.Services.AddScoped<IImagenesService>(sp => new ImagenesService(
-    sp.GetRequiredService<PexelsService>(),
-    sp.GetRequiredService<WikimediaService>()
+    sp.GetRequiredService<WikimediaService>(),
+    sp.GetRequiredService<PexelsService>()
 ));
-builder.Services.AddScoped<IUsuarioService, UsuarioService>();
+
+builder.Services.AddScoped<IUsuarioService, UsuarioService>(); //registro estandar para interfaces
 builder.Services.AddScoped<IAlbumesService, AlbumesService>();
 
 builder.Services.AddCors(options =>
@@ -45,7 +48,7 @@ builder.Services.AddDbContext<MiDbcontext>(options =>
 builder.Services.AddAuthentication("Bearer")
     .AddJwtBearer("Bearer", options =>
     {
-        options.TokenValidationParameters = new TokenValidationParameters
+        options.TokenValidationParameters = new TokenValidationParameters //todo lo que tiene que validar para aceptar un token
         {
             ValidateIssuer = true,
             ValidateAudience = true,
@@ -63,6 +66,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 
+
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
@@ -71,15 +75,11 @@ using (var scope = app.Services.CreateScope())
     db.Database.Migrate();
 }
 
-
-
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
-//app.UseHttpsRedirection();
 
 app.UseCors();
 

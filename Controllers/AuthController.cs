@@ -1,5 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using SketchMuse.Application.Interfaces;
+
 namespace SketchMuse.Controllers
 {
     [ApiController]
@@ -18,27 +19,23 @@ namespace SketchMuse.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Registrarse([FromBody] UsuarioDTO dto)
         {
-            var user = await _usuarioService.Registro(dto.Email, dto.Password);
-            if (user == null)
-            {
+            var usuario = await _usuarioService.Registro(dto.Email, dto.Password);
+            if (usuario == null)
                 return BadRequest("El email ya está registrado.");
-            }
 
-            var token = _jwtService.GenerarToken(user);
-            return Ok(new AuthDTO { Token = token, Email = user.Email });
+            var token = _jwtService.GenerarToken(usuario);
+            return Ok(new AuthDTO { Token = token, Email = usuario.Email });
         }
 
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] UsuarioDTO dto)
         {
-            var user = await _usuarioService.Login(dto.Email, dto.Password);
-            if (user == null)
-            {
+            var usuario = await _usuarioService.Login(dto.Email, dto.Password);
+            if (usuario == null)
                 return Unauthorized(new { error = "Email o contraseña incorrectos." });
-            }
 
-            var token = _jwtService.GenerarToken(user);
-            return Ok(new AuthDTO { Token = token, Email = user.Email });
+            var token = _jwtService.GenerarToken(usuario);
+            return Ok(new AuthDTO { Token = token, Email = usuario.Email });
         }
     }
 }

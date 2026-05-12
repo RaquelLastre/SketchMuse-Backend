@@ -1,12 +1,12 @@
-﻿using SketchMuse.Domain.Entities;
+using SketchMuse.Domain.DTOs;
 
 namespace SketchMuse.Application.Interfaces
 {
     public interface IUsuarioService
     {
-        Task<Usuario?> Registro(string email, string password);
-        Task<Usuario?> Login(string email, string password);
-        Task<List<Usuario>> GetUsuarios();
+        Task<UsuarioResponseDTO?> Registro(string email, string password);
+        Task<UsuarioResponseDTO?> Login(string email, string password);
+        Task<List<UsuarioResponseDTO>> GetUsuarios();
         Task<bool> EliminarUsuario(int id);
     }
 }

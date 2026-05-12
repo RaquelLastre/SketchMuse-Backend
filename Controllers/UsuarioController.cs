@@ -1,7 +1,6 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SketchMuse.Application.Interfaces;
-using System.Security.Claims;
 
 namespace SketchMuse.Controllers
 {
@@ -21,14 +20,7 @@ namespace SketchMuse.Controllers
         public async Task<IActionResult> GetUsuarios()
         {
             var usuarios = await _usuarioService.GetUsuarios();
-            var resultado = usuarios.Select(u => new
-            {
-                u.Id,
-                u.Email,
-                u.Rol,
-                u.CreatedAt
-            });
-            return Ok(resultado);
+            return Ok(usuarios);
         }
 
         [HttpDelete("{id}")]

@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Mvc;
 using SketchMuse.Application.Interfaces;
 using System.Security.Claims;
-using static SketchMuse.Application.Interfaces.IAlbumesService;
 
 namespace SketchMuse.Controllers
 {
@@ -38,7 +37,7 @@ namespace SketchMuse.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(503, new
+                return StatusCode(503, new //porque es un error de un servicio externo
                 {
                     mensaje = "Tenemos problemas técnicos con las APIs externas",
                     detalles = ex.Message

@@ -1,59 +1,56 @@
-﻿using Microsoft.EntityFrameworkCore;
+using AutoMapper;
+using Microsoft.EntityFrameworkCore;
+using SketchMuse.Application.Interfaces;
+using SketchMuse.Domain.DTOs;
 using SketchMuse.Domain.Entities;
 using SketchMuse.Infrastructure.Data;
 
-namespace SketchMuse.Application.Interfaces
+namespace SketchMuse.Application.Services
 {
     public class UsuarioService : IUsuarioService
     {
         private readonly MiDbcontext _context;
+        private readonly IMapper _mapper;
 
-        public UsuarioService(MiDbcontext context)
+        public UsuarioService(MiDbcontext context, IMapper mapper)
         {
             _context = context;
+            _mapper = mapper;
         }
 
-        public async Task<Usuario?> Registro(string email, string password)
+        public async Task<UsuarioResponseDTO?> Registro(string email, string password)
         {
-            // Comprobar si el email ya existe
             if (await _context.Usuarios.AnyAsync(u => u.Email == email))
-            {
                 return null;
-            }
-                
+
             var usuario = new Usuario
             {
                 Email = email,
-                Password = BCrypt.Net.BCrypt.HashPassword(password) // Hash de la contraseña
+                Password = BCrypt.Net.BCrypt.HashPassword(password)
             };
 
             _context.Usuarios.Add(usuario);
             await _context.SaveChangesAsync();
-            return usuario;
+            return _mapper.Map<UsuarioResponseDTO>(usuario);
         }
 
-        public async Task<Usuario?> Login(string email, string password)
+        public async Task<UsuarioResponseDTO?> Login(string email, string password)
         {
-            var user = await _context.Usuarios.FirstOrDefaultAsync(u => u.Email == email);
-            if (user == null)
-            {
-                return null;
-            }
+            var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.Email == email);
+            if (usuario == null) return null;
 
-            bool passwordCorrecta = BCrypt.Net.BCrypt.Verify(password, user.Password);
-            if (!passwordCorrecta)
-            {
-                return null;
-            }
+            if (!BCrypt.Net.BCrypt.Verify(password, usuario.Password)) return null;
 
-            return user;
+            return _mapper.Map<UsuarioResponseDTO>(usuario);
         }
 
-        public async Task<List<Usuario>> GetUsuarios()
+        public async Task<List<UsuarioResponseDTO>> GetUsuarios()
         {
-            return await _context.Usuarios
+            var usuarios = await _context.Usuarios
                 .OrderBy(u => u.CreatedAt)
                 .ToListAsync();
+
+            return _mapper.Map<List<UsuarioResponseDTO>>(usuarios);
         }
 
         public async Task<bool> EliminarUsuario(int id)

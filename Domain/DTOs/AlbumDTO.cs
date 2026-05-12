@@ -3,9 +3,9 @@
     public class AlbumDTO
     {
         public int Id { get; set; }
-        public string Titulo { get; set; }
+        public string Titulo { get; set; } = "";
         public DateTime UsedAt { get; set; }
-        public List<string> PreviewImagenes { get; set; }
+        public List<string> PreviewImagenes { get; set; } = new();
         public int NumImagenes { get; set; }
     }
 }
