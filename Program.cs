@@ -19,7 +19,7 @@ builder.Services.AddHttpClient<PexelsService>(); //se inyecta aqui el httpclient
 builder.Services.AddHttpClient<PixabayService>();
 
 builder.Services.AddScoped<IImagenesService>(sp => new ImagenesService(
-    p.GetRequiredService<PexelsService>(),
+    sp.GetRequiredService<PexelsService>(),
     sp.GetRequiredService<PixabayService>()
 ));
 
