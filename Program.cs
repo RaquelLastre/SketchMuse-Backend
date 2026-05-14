@@ -16,11 +16,11 @@ builder.Services.AddAutoMapper(typeof(MappingProfile));
 builder.Services.AddSingleton<JwtService>(); //se crea aqui para no generar un jwt por peticion
 
 builder.Services.AddHttpClient<PexelsService>(); //se inyecta aqui el httpclient para que se reutilice y no se creen muchos sockets, en vez de en la clase. Ademas lo guarda en services para poder usarlo en el servicio de imagenes
-builder.Services.AddHttpClient<WikimediaService>();
+builder.Services.AddHttpClient<PixabayService>();
 
 builder.Services.AddScoped<IImagenesService>(sp => new ImagenesService(
-    sp.GetRequiredService<WikimediaService>(),
-    sp.GetRequiredService<PexelsService>()
+    p.GetRequiredService<PexelsService>(),
+    sp.GetRequiredService<PixabayService>()
 ));
 
 builder.Services.AddScoped<IUsuarioService, UsuarioService>(); //registro estandar para interfaces
